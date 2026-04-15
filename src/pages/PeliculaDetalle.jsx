@@ -64,6 +64,23 @@ export default function PeliculaDetalle() {
             </Box>
             <Typography variant="h2" sx={{ fontSize: '2.8rem', mb: 2 }}>{pelicula?.titulo}</Typography>
             <Typography color="text.secondary" sx={{ lineHeight: 1.8, mb: 4 }}>{pelicula?.descripcion}</Typography>
+            
+{pelicula?.trailer_url && (
+              <Box sx={{ mt: 4, mb: 4 }}>
+                <Typography variant="h6" mb={2} fontWeight={700}>Trailer Oficial</Typography>
+                <div style={{ borderRadius: '15px', boxShadow: '0 4px 15px rgba(0,0,0,0.3)', overflow: 'hidden' }}>
+                  <iframe
+                    width="100%"
+                    height="450"
+                    src={pelicula.trailer_url}
+                    title="YouTube video player"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                  />
+                </div>
+              </Box>
+            )}
           </Grid>
 
           <Grid item xs={12} md={4}>

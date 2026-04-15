@@ -54,14 +54,13 @@ export default function SeatSelection() {
   const { user } = useAuth()
 
   const [funcion, setFuncion] = useState(null)
-  const [asientosOcupados, setAsientosOcupados] = useState(new Set())
+  const [asientosOcupados, setAsientosOcupados] = useState([])
   const [seleccionados, setSeleccionados] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   useEffect(() => {
     fetchDatos()
-    // Suscripción en tiempo real para actualizar asientos ocupados
     const channel = supabase
       .channel(`funcion-${funcionId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'detalle_tiquete' }, () => {
@@ -87,26 +86,34 @@ export default function SeatSelection() {
   }
 
   const fetchAsientosOcupados = async () => {
-    // Obtener asientos ya vendidos para esta función (joins via tiquetes)
     const { data } = await supabase
       .from('detalle_tiquete')
       .select('asiento_numero')
       .eq('funcion_id', funcionId)
 
-    const ocupados = new Set((data || []).map(d => d.asiento_numero))
-    setAsientosOcupados(ocupados)
+    setAsientosOcupados((data || []).map(d => d.asiento_numero))
   }
 
-  const toggleSeat = (seatId) => {
+  // Generar 150 asientos
+  const totalAsientos = 150;
+  const asientos = Array.from({ length: totalAsientos }, (_, i) => {
+    const numero = i + 1;
+    const isVip = numero > 100;
+    return { numero, isVip };
+  });
+
+  const toggleSeat = (numero) => {
+    if (asientosOcupados.includes(numero)) return;
+
     setSeleccionados(prev =>
-      prev.includes(seatId)
-        ? prev.filter(s => s !== seatId)
-        : [...prev, seatId]
+      prev.includes(numero)
+        ? prev.filter(s => s !== numero)
+        : [...prev, numero]
     )
   }
 
-  const totalAsientos = seleccionados.length
-  const totalPrecio = totalAsientos * (funcion?.precio || 0)
+  const totalSeleccionados = seleccionados.length;
+  const totalPrecio = seleccionados.reduce((sum, num) => sum + (num > 100 ? funcion?.precio * 1.5 : funcion?.precio) || 0, 0) || 0;
 
   const procederCompra = () => {
     if (!user) { navigate('/login'); return }
@@ -124,12 +131,9 @@ export default function SeatSelection() {
   if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 15 }}><CircularProgress size={60} color="primary" /></Box>
   if (error) return <Container sx={{ pt: 15 }}><Alert severity="error">{error}</Alert></Container>
 
-  const asientosDisponibles = 150 - asientosOcupados.size
-
   return (
     <Box sx={{ minHeight: '100vh', pt: 10, pb: 6 }}>
       <Container maxWidth="xl">
-        {/* Header */}
         <Box sx={{ mb: 4 }}>
           <Button startIcon={<ArrowBack />} onClick={() => navigate(`/pelicula/${funcion?.pelicula_id}`)} sx={{ mb: 2 }}>
             Volver
@@ -146,24 +150,22 @@ export default function SeatSelection() {
         </Box>
 
         <Grid container spacing={3}>
-          {/* Mapa de asientos */}
           <Grid item xs={12} lg={9}>
             <Paper sx={{ p: { xs: 2, md: 3 }, bgcolor: 'background.paper', borderRadius: 3 }}>
-              {/* Leyenda */}
               <Box sx={{ display: 'flex', gap: 3, mb: 3, flexWrap: 'wrap', justifyContent: 'center' }}>
                 {[
-                  { color: 'rgba(46,204,113,0.1)', border: 'rgba(46,204,113,0.5)', label: `Disponible (${asientosDisponibles})` },
-                  { color: '#E50914', border: '#FF3D47', label: `Seleccionado (${seleccionados.length})` },
-                  { color: '#2C2C3A', border: '#3A3A4A', label: `Ocupado (${asientosOcupados.size})` },
+                  { bg: '#4facfe', label: 'General' },
+                  { bg: '#f6d365', label: 'VIP' },
+                  { bg: '#43e97b', label: 'Seleccionado' },
+                  { bg: '#ff0844', label: 'Ocupado' },
                 ].map(item => (
                   <Box key={item.label} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Box sx={{ width: 20, height: 20, borderRadius: 1, bgcolor: item.color, border: `1.5px solid ${item.border}` }} />
-                    <Typography variant="caption" color="text.secondary">{item.label}</Typography>
+                    <Box sx={{ width: 25, height: 25, borderRadius: '8px 8px 4px 4px' , bgcolor: item.bg }} />
+                    <Typography variant="caption">{item.label}</Typography>
                   </Box>
                 ))}
               </Box>
 
-              {/* Pantalla */}
               <Box sx={{ mb: 4, textAlign: 'center' }}>
                 <Box sx={{
                   width: '70%', mx: 'auto',
@@ -177,85 +179,75 @@ export default function SeatSelection() {
                 </Typography>
               </Box>
 
-              {/* Grid de asientos */}
-              <Box sx={{ overflowX: 'auto', pb: 2 }}>
-                <Box sx={{ minWidth: 420 }}>
-                  {FILAS.map(fila => (
-                    <Box key={fila} sx={{ display: 'flex', alignItems: 'center', mb: 0.5, gap: { xs: 0.3, sm: 0.5 } }}>
-                      <Typography sx={{ width: 20, fontSize: '0.75rem', color: 'text.secondary', fontWeight: 700, flexShrink: 0, textAlign: 'center' }}>
-                        {fila}
-                      </Typography>
-                      {COLUMNAS.map(col => {
-                        const seatId = `${fila}${col}`
-                        return (
-                          <SeatButton
-                            key={seatId}
-                            seatId={seatId}
-                            estado={asientosOcupados.has(seatId) ? 'ocupado' : 'disponible'}
-                            seleccionado={seleccionados.includes(seatId)}
-                            onClick={() => toggleSeat(seatId)}
-                          />
-                        )
-                      })}
-                      <Typography sx={{ width: 20, fontSize: '0.75rem', color: 'text.secondary', fontWeight: 700, flexShrink: 0, textAlign: 'center' }}>
-                        {fila}
-                      </Typography>
-                    </Box>
-                  ))}
-                  {/* Números de columna */}
-                  <Box sx={{ display: 'flex', ml: '28px', gap: { xs: 0.3, sm: 0.5 }, mt: 0.5 }}>
-                    {COLUMNAS.map(col => (
-                      <Typography key={col} sx={{ width: { xs: 22, sm: 28 }, fontSize: '0.55rem', color: 'text.secondary', textAlign: 'center', flexShrink: 0 }}>
-                        {col}
-                      </Typography>
-                    ))}
-                  </Box>
-                </Box>
+              <Box className="sala-container" sx={{ overflowX: 'auto' }}>
+                <div className="pantalla">PANTALLA</div>
+                <div className="grid-asientos">
+                  {asientos.map((asiento) => {
+                    const isOcupado = asientosOcupados.includes(asiento.numero);
+                    const isSeleccionado = seleccionados.includes(asiento.numero);
+                    let clase = 'asiento';
+                    if (isOcupado) clase += ' ocupado';
+                    else if (isSeleccionado) clase += ' seleccionado';
+                    else if (asiento.isVip) clase += ' vip';
+
+                    return (
+                      <button
+                        key={asiento.numero}
+                        className={clase}
+                        onClick={() => toggleSeat(asiento.numero)}
+                        disabled={isOcupado}
+                      >
+                        {asiento.numero}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="leyenda">
+                  <span className="asiento"></span> General
+                  <span className="asiento vip"></span> VIP
+                  <span className="asiento seleccionado"></span> Seleccionado
+                  <span className="asiento ocupado"></span> Ocupado
+                </div>
               </Box>
             </Paper>
           </Grid>
 
-          {/* Panel de resumen */}
           <Grid item xs={12} lg={3}>
             <Paper sx={{ p: 3, borderRadius: 3, position: 'sticky', top: 90 }}>
               <Typography variant="h6" fontWeight={700} mb={2}>Resumen de compra</Typography>
               <Divider sx={{ mb: 2 }} />
-
-              {seleccionados.length === 0 ? (
+              {totalSeleccionados === 0 ? (
                 <Box sx={{ textAlign: 'center', py: 3 }}>
                   <EventSeat sx={{ fontSize: 48, color: 'text.secondary', mb: 1 }} />
                   <Typography variant="body2" color="text.secondary">
-                    Selecciona tus asientos en el mapa
+                    Selecciona tus asientos
                   </Typography>
                 </Box>
               ) : (
                 <>
-                  <Typography variant="body2" color="text.secondary" mb={1}>Asientos seleccionados:</Typography>
+                  <Typography variant="body2" color="text.secondary" mb={1}>Asientos:</Typography>
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 2 }}>
                     {seleccionados.sort().map(s => (
-                      <Chip key={s} label={s} size="small" color="primary" onDelete={() => toggleSeat(s)} />
+                      <Chip key={s} label={s} size="small" color="primary" />
                     ))}
                   </Box>
                   <Divider sx={{ mb: 2 }} />
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                    <Typography variant="body2" color="text.secondary">{totalAsientos} asiento(s) × ${funcion?.precio?.toLocaleString('es-CO')}</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                    <Typography variant="h6" fontWeight={700}>Total:</Typography>
-                    <Typography variant="h6" fontWeight={700} color="primary.main">
-                      ${totalPrecio.toLocaleString('es-CO')}
-                    </Typography>
-                  </Box>
+                  <Typography variant="body2" fontWeight={600}>
+                    {totalSeleccionados} asientos
+                  </Typography>
+                  <Typography variant="h6" fontWeight={700} color="primary.main">
+                    ${totalPrecio.toLocaleString('es-CO')}
+                  </Typography>
                 </>
               )}
-
               <Button
                 fullWidth variant="contained" size="large"
                 startIcon={<ShoppingCart />}
-                disabled={seleccionados.length === 0}
+                disabled={totalSeleccionados === 0}
                 onClick={procederCompra}
+                sx={{ mt: 2 }}
               >
-                Continuar ({seleccionados.length})
+                Continuar ({totalSeleccionados})
               </Button>
             </Paper>
           </Grid>

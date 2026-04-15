@@ -1,0 +1,75 @@
+{
+  "name": "cine-verse",
+  "version": "1.0.0",
+  "private": true,
+  "author": "Giseella Sanchez Rico",
+  "description": "Sistema moderno de gestión de taquilla cinematográfica - ADSO SENA",
+  "license": "MIT",
+  "dependencies": {
+    "@date-io/date-fns": "^3.2.1",
+    "@date-io/moment": "1.3.11",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@fullcalendar/core": "^4.3.1",
+    "@fullcalendar/daygrid": "^4.3.0",
+    "@fullcalendar/interaction": "^4.3.0",
+    "@fullcalendar/react": "^4.3.0",
+    "@fullcalendar/timegrid": "^4.3.0",
+    "@material-ui/core": "4.11.4",
+    "@material-ui/icons": "4.11.2",
+    "@material-ui/lab": "4.0.0-alpha.57",
+    "@material-ui/pickers": "3.3.10",
+    "@mui/icons-material": "^9.0.0",
+    "@mui/lab": "^9.0.0-beta.2",
+    "@mui/material": "^9.0.0",
+    "@mui/x-date-pickers": "^9.0.0",
+    "chart.js": "^2.9.2",
+    "classnames": "2.2.6",
+    "jspdf": "^1.5.3",
+    "moment": "2.24.0",
+    "react": "^18.2.0",
+    "react-chartjs-2": "^2.8.0",
+    "react-dom": "^18.2.0",
+    "react-facebook-login": "4.1.1",
+    "react-google-login": "^5.0.7",
+    "react-redux": "7.1.1",
+    "react-router-dom": "^5.3.4",
+    "react-scripts": "^4.0.3",
+    "react-slick": "0.25.2",
+    "redux": "4.0.4",
+    "redux-devtools-extension": "2.13.8",
+    "redux-thunk": "2.3.0",
+    "slick-carousel": "1.8.1",
+    "typeface-montserrat": "0.0.75",
+    "uuid": "3.3.3"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "proxy": "http://localhost:8080",
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.0.1",
+    "eslint-plugin-react": "^7.32.2",
+    "sass": "^1.70.0",
+    "vite": "^8.0.8",
+    "xregexp": "^4.4.0"
+  }
+}
+

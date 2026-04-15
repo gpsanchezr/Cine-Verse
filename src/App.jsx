@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider, Outlet } from 'react-router-dom'
 import { ThemeProvider, CssBaseline, Box } from '@mui/material'
 import theme from './theme'
 import { AuthProvider } from './contexts/AuthContext'
@@ -23,46 +23,70 @@ import AdminPeliculas from './pages/admin/Peliculas'
 import AdminFunciones from './pages/admin/Funciones'
 import AdminTiquetes from './pages/admin/Tiquetes'
 
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: (
+      <div>
+        <Navbar />
+        <Box sx={{ minHeight: '100vh' }}>
+          <Outlet />
+        </Box>
+        <CineBot />
+      </div>
+    ),
+    children: [
+      { index: true, element: <Home /> },
+      { path: "login", element: <Login /> },
+      { path: "register", element: <Register /> },
+      { path: "cartelera", element: <Cartelera /> },
+      { path: "pelicula/:id", element: <PeliculaDetalle /> },
+      { path: "validar", element: <ValidarTiquete /> },
+      { 
+        path: "asientos/:funcionId", 
+        element: (
+          <ProtectedRoute>
+            <SeatSelection />
+          </ProtectedRoute>
+        ) 
+      },
+      { 
+        path: "checkout", 
+        element: (
+          <ProtectedRoute>
+            <Checkout />
+          </ProtectedRoute>
+        ) 
+      },
+      { 
+        path: "admin", 
+        element: (
+          <AdminRoute>
+            <AdminLayout />
+          </AdminRoute>
+        ),
+        children: [
+          { index: true, element: <Dashboard /> },
+          { path: "peliculas", element: <AdminPeliculas /> },
+          { path: "funciones", element: <AdminFunciones /> },
+          { path: "tiquetes", element: <AdminTiquetes /> }
+        ]
+      }
+    ]
+  }
+], {
+  future: {
+    v7_startTransition: true,
+    v7_relativeSplatPath: true
+  }
+})
+
 export default function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AuthProvider>
-        <BrowserRouter>
-          <Navbar />
-          <Box sx={{ minHeight: '100vh' }}>
-            <Routes>
-              {/* Rutas públicas */}
-              <Route path="/" element={<Home />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/cartelera" element={<Cartelera />} />
-              <Route path="/pelicula/:id" element={<PeliculaDetalle />} />
-              <Route path="/validar" element={<ValidarTiquete />} />
-
-              {/* Rutas protegidas (requieren login) */}
-              <Route path="/asientos/:funcionId" element={
-                <ProtectedRoute><SeatSelection /></ProtectedRoute>
-              } />
-              <Route path="/checkout" element={
-                <ProtectedRoute><Checkout /></ProtectedRoute>
-              } />
-
-              {/* Rutas Admin */}
-              <Route path="/admin" element={
-                <AdminRoute><AdminLayout /></AdminRoute>
-              }>
-                <Route index element={<Dashboard />} />
-                <Route path="peliculas" element={<AdminPeliculas />} />
-                <Route path="funciones" element={<AdminFunciones />} />
-                <Route path="tiquetes" element={<AdminTiquetes />} />
-              </Route>
-            </Routes>
-          </Box>
-
-          {/* Chatbot flotante en todas las páginas */}
-          <CineBot />
-        </BrowserRouter>
+        <RouterProvider router={router} />
       </AuthProvider>
     </ThemeProvider>
   )
